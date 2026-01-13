@@ -1,6 +1,8 @@
-// Use a server-side proxy to avoid exposing the API key in client code.
-// The proxy endpoint provided below should be available when running the local server.
-const API_PROXY = ''; // empty => same origin
+// The client calls the local server proxy at `/weather?city=...`.
+// The server holds the API key in `.env` and forwards requests to WeatherAPI.
+// If you want to call WeatherAPI directly (not recommended), set `USE_DIRECT_API = true` below.
+const USE_DIRECT_API = false;
+const API_KEY = '';
 
 const temperatureElement = document.getElementById('temperature');
 const conditionElement = document.getElementById('condition');
@@ -17,9 +19,13 @@ const searchButton = document.getElementById('search-button');
 let defaultCity = 'mumbai';
 
 async function fetchWeatherData(targetlocation = defaultCity) {
-    // Call the proxy endpoint which will forward the request to WeatherAPI using the server-side key.
-    const proxyBase = API_PROXY || '';
-    const url = `${proxyBase}/weather?city=${encodeURIComponent(targetlocation)}`;
+    let url;
+    if (USE_DIRECT_API && API_KEY) {
+        url = `https://api.weatherapi.com/v1/current.json?key=${API_KEY}&q=${encodeURIComponent(targetlocation)}&aqi=yes`;
+    } else {
+        // call local proxy (server.js) which forwards to WeatherAPI
+        url = `/weather?city=${encodeURIComponent(targetlocation)}`;
+    }
     try {
         const response = await fetch(url);
         if (!response.ok) {
